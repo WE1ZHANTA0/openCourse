@@ -11,7 +11,13 @@ class KVueRouter {
 
     // 需要创建响应式的current属性
     // this.current = '/'
-    Vue.util.defineReactive(this, 'current', '/')
+    // Vue.util.defineReactive(this, 'current', '/')
+
+    this.current = window.location.hash.slice(1) || '/'
+    Vue.util.defineReactive(this, 'matched', [])
+    // match方法可以递归遍历路由表 获得匹配关系的数组
+    this.match()
+
 
     // 监控url变化
     window.addEventListener('hashchange', this.onHashChange.bind(this))
@@ -19,16 +25,39 @@ class KVueRouter {
     window.addEventListener('load', this.onHashChange.bind(this))
 
     // 创建一个映射表
-    this.routerMap = {}
-    params.routes.forEach((router) => {
-      this.routerMap[router.path] = router
-      // if (router.path === this.$router.current) {
-      //   component = router.component
-      // }
-    })
+    // this.routerMap = {}
+    // params.routes.forEach((router) => {
+    //   this.routerMap[router.path] = router
+    //   // if (router.path === this.$router.current) {
+    //   //   component = router.component
+    //   // }
+    // })
   }
+
+  match(routes) {
+    routes = routes || this.$params.routes
+
+    // 递归遍历
+    for (const route of routes) {
+      if (route.path === '/' && this.current === '/') {
+        this.matched.push(route)
+        return
+      }
+      // 
+      if (route.path !== '/' && this.current.indexOf(route.path) != -1) {
+        this.matched.push(route)
+        if (route.children) {
+          this.match(route.children)
+        }
+        return
+      }
+    }
+  }
+
   onHashChange() {
     this.current = window.location.hash.slice(1)
+    this.matched = []
+    this.match()
   }
 }
 

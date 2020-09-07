@@ -3,14 +3,36 @@ class Store{
   constructor(options) {
     this._mutations = options.mutations
     this._actions = options.actions
+    this._wrappedGetters = options.getters
     // this.state = new Vue({
     //   data: options.state
     // })
+
+    // 定义我们computed选项
+    const computed = {}
+    this.getters = {}
+    // {doubleCounter(state){}}
+    const store = this
+    Object.keys(this._wrappedGetters).forEach((key) => {
+      // 获取用户定义的getter
+      const fn = store._wrappedGetters[key]
+      // 转换为computed的可使用的无参数形式
+      computed[key] = function() {
+        return fn(store.state)
+      }
+      // 劫持 为getters定义只读属性
+      Object.defineProperty(store.getters, key, {
+        get: () => store._vm[key]
+      })
+    })
+
+
     this._vm = new Vue({
       data: {
         // 加两个$ vue 不会去做代理  意味着vm里访问不大this._vm.data.$$store   只能this._vm._data.$$store访问
         $$store: options.state
-      }
+      },
+      computed
     })
 
     // 绑定commit 和 dispatch上下文为store实例
@@ -19,12 +41,12 @@ class Store{
   }
 
   get state() {
-    console.log(this._vm)
+    // console.log(this._vm)
     return this._vm._data.$$store
   }
 
   set state(v) {
-    console.error('gun')
+    // console.error('gun')
   }
 
 
