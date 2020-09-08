@@ -61,7 +61,23 @@ class Compile {
         // 执行指令
         this[dir] && this[dir](node, exp)
       }
+      // 事件处理
+      if (this.isEvent(attrName)) {
+        // @click='onClick'
+        const dir = attrName.substring(1) // click
+        // 事件监听
+        this.eventHandler(node, exp, dir)
+      }
     })
+  }
+
+  isEvent(attr) {
+    return attr.indexOf('@') === 0
+  }
+
+  eventHandler(node, exp, dir) {
+    const fn = this.$vm.$options.methods && this.$vm.$options.methods[exp]
+    node.addEventListener(dir, fn.bind(this.$vm))
   }
   // 判断是否是指令 
   isDirective(attr) {
@@ -98,5 +114,19 @@ class Compile {
   html(node, exp) {
     // node.innerHTML = this.$vm[exp]
     this.update(node, exp, 'html')
+  }
+  //  k-model
+  model(node, exp) {
+    // update方法只完成赋值和更新
+    this.update(node, exp, 'model')
+    // 事件监听
+    node.addEventListener('input', e => {
+      // 将新的值赋值给数据即可
+      this.$vm[exp] = e.target.value
+    })
+  }
+  modelUpdater(node, value) {
+    // 表单赋值
+    node.value = value
   }
 }
